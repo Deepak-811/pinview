@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    xmlns:pinview="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/darker_gray"
+    tools:context=".MainActivity">
+
+    <com.deepak.library.PinView
+        android:id="@+id/pinview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        pinview:password="true"
+        pinview:split="-"
+        pinview:pinHint="*"
+        pinview:numberCharacters="1"
+        pinview:deleteOnClick="false"
+        pinview:keyboardMandatory="false"
+        pinview:nativePinBox="false"
+        pinview:colorSplit="@android:color/darker_gray"
+        pinview:colorTextPinBox="@android:color/black"
+        pinview:colorTextTitles="@android:color/black"
+      />
+    <com.deepak.library.PinView
+        android:id="@+id/pinview_prog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+      />
+
+
+</LinearLayout>
