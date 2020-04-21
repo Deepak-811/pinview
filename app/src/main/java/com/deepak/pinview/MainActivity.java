@@ -65,9 +65,5 @@ public class MainActivity extends AppCompatActivity {
          */
         Log.e(TAG, "onComplete: "+pinview_prog.getPinResults() );
 
-        /**
-         * deepak
-         */
-        Log.e(TAG, "onComplete: "+pinview_prog.getPinResults() );
     }
 }
