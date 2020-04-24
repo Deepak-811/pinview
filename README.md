@@ -1,6 +1,6 @@
-# pinview
+# Pinview
 
-[![version](https://img.shields.io/badge/version-1.0-green.svg)](https://semver.org)
+[![version](https://img.shields.io/badge/version-1.1-green.svg)](https://semver.org)
 
 ## Installation
 
@@ -17,84 +17,65 @@ allprojects {
  Add the dependency
  ```java
   dependencies {
-	        implementation 'com.github.Deepak-811:pinview:1.0'
+	        implementation 'com.github.Deepak-811:pinview:1.1'
 	}
   ```
   Sync the gradle and that's it
   
+  ### Features : 
+ * Flawless focus change to the consecutive pin box when the text is entered/deleted.
+ * When the user taps on the Pinview, the first empty box available is focused automatically (when the cursor is hidden).
+ * Customisations are available for pin box sizes, background(drawables, selectors), inputType etc.
+  
   ## Usage
   
   **XML**
-  ```html
-  <com.deepak.library.PinView
-        android:id="@+id/pinview"
+  ```xml
+ <com.deepak.library.PinView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        pinview:password="true"
-        pinview:split="-"
-        pinview:pinHint="*"
-        pinview:numberCharacters="1"
-        pinview:deleteOnClick="false"
-        pinview:keyboardMandatory="false"
-        pinview:nativePinBox="false"
-        pinview:colorSplit="@android:color/darker_gray"
-        pinview:colorTextPinBox="@android:color/black"
-        pinview:colorTextTitles="@android:color/black"
-        />
+        app:pinSize="6"
+        app:pinHint="*"
+        app:boxSpacing="8dp"
+        app:boxWidth="40dp"
+        app:boxHeight="40dp"
+        app:boxBackground="@drawable/sample_background"/>
  ```
- This can be referenced in the java class by the findViewById method.
+ This can be referenced in the java class by the **findViewById** method.
+ 
+ ##### Available xml attributes and explanations : 
+
+```app:boxBackground``` : Sets the pin box's background, accepts a drawable <br />
+```app:boxWidth``` and ```app:boxHeight``` : Sets the width and height of the pinbox. <br />
+```app:pinSize``` : number of pin boxes to be displayed.<br />
+```app:pinHint``` : Pin box hint. <br />
  
  **How to get the Values?**
  
  **Method 1**
  ```java
  PinView pinview = findViewById(R.id.pinview);
- pinview.getPinResults();
+ pinview.getValues();
  ```
  
  **Method 2**
  ```java
-  pinview.setOnCompleteListener(new PinView.OnCompleteListener() {
+  pinview.setPinCompleteListener(new PinView.PinCompleteListener() {
             @Override
-            public void onComplete(boolean completed, String pinResults) {
-                Toast.makeText(MainActivity.this, "Completed: pinview_prog--" + completed + "\nValue: " + pinResults,
+            public void onCompletePin(String result, boolean isCompleted) {
+                Toast.makeText(MainActivity.this, "Completed: " + isCompleted + "\nValue: " + result,
                         Toast.LENGTH_SHORT).show();
             }
         });
  ```
+ ## Default Values
  
- ## Setting Pinview programmatically
+ ```app:boxBackground``` : Round <br />
+```app:boxWidth``` and ```app:boxHeight``` :  width = 40dp and height= 40dp <br />
+```app:pinSize``` : 4<br />
+```app:pinHint``` :* <br />
  
- **Step-1**
- 
- ```html
-  <com.deepak.library.PinView
-        android:id="@+id/pinview_prog"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-      />
- ```
- 
- **Step-2**
- ```java
- PinView pinview_prog = findViewById(R.id.pinview_prog);
- ```
- 
- **Step-3**
- ```java
-  PinViewSettings pinViewSettings = new PinViewSettings.Builder()
-                .withMaskPassword(true)
-                .withDeleteOnClick(true)
-                .withKeyboardMandatory(false)
-                .withSplit(null)
-                .withHint("#")
-                .withNumberPinBoxes(5)
-                .withNativePinBox(false)
-                .build();
-                
-  pinview_prog.setSettings(pinViewSettings);
-  
- ```
+
  
  ## License
 MIT License
