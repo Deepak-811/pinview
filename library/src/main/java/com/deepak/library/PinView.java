@@ -1,470 +1,205 @@
 package com.deepak.library;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.os.Bundle;
-import android.os.Parcelable;
+import android.content.res.TypedArray;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 
-public class PinView extends PinViewBaseHelper {
+public class PinView extends LinearLayout implements TextWatcher {
 
-    private PinViewSettings mPinViewSettings;
-    private OnCompleteListener onCompleteListener = null;
+    public static final String TAG = PinView.class.getSimpleName();
+    private TypedArray typedArray;
+    private Context context;
 
+    /**
+     * Default pin size
+     */
+    private int defaultPinSize = 4;
+
+    /**
+     * Default box width
+     */
+    private float boxWidth = 40f;
+
+    /**
+     * Default box height
+     */
+    private float boxHeight = 40f;
+
+    /**
+     * Default box spacing
+     */
+    private float boxSpacing = 8f;
+
+    /**
+     * Default pin hint
+     */
+    private String hint = "*";
+
+    /**
+     * Default box background
+     */
+    private int resource = R.drawable.sample_background;
+
+    private int currentPosition = 0;
+    private LayoutParams layoutParams;
+    private AttributeSet attrs;
+    private PinCompleteListener pinCompleteListener;
+    private InputFilter[] filterArray = new InputFilter[1];
+
+
+    public PinView(Context context) {
+        super(context);
+        this.context = context;
+        init(context, null);
+    }
 
     public PinView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.context = context;
+        this.attrs = attrs;
+        init(context, attrs);
     }
 
-    @Override
-    public void setTitles(String[] titles) {
-        if (titles != null) {
-            mLinearLayoutPinTexts.removeAllViews();
-            mPinTitles = titles;
-            pinTitlesIds = new int[titles.length];
-            for (int i = 0; i < titles.length; i++) {
-                mLinearLayoutPinTexts.addView(generatePinText(i, titles), i);
-            }
+    public PinView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        this.context = context;
+        this.attrs = attrs;
+        init(context, attrs);
+    }
+
+    public void setPinCompleteListener(PinCompleteListener pinCompleteListener) {
+        this.pinCompleteListener = pinCompleteListener;
+    }
+
+    private float dpTopixel(Context c, float dp) {
+        if (dp == 0 || dp == 0.0) {
+            dp = 40f;
+        }
+        float density = c.getResources().getDisplayMetrics().density;
+        float pixel = dp * density;
+        return pixel;
+    }
+
+    public String getValues() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("");
+
+        for (int i = 0; i < defaultPinSize; i++) {
+            EditText editText = (EditText) getChildAt(i);
+            stringBuilder.append(editText.getText());
+        }
+
+        return stringBuilder.toString();
+    }
+
+
+    public void init(Context context, AttributeSet attrs) {
+
+        if (attrs != null) {
+            typedArray = context.obtainStyledAttributes(attrs, R.styleable.PinView, 0, 0);
+            defaultPinSize = typedArray.getInt(R.styleable.PinView_pinSize, 4);
+            hint = typedArray.getString(R.styleable.PinView_pinHint);
+            boxHeight = typedArray.getDimension(R.styleable.PinView_boxHeight, -1);
+            boxWidth = typedArray.getDimension(R.styleable.PinView_boxWidth, -1);
+            boxSpacing = typedArray.getDimension(R.styleable.PinView_boxSpacing, -1);
+            resource = typedArray.getResourceId(R.styleable.PinView_boxBackground, R.drawable.sample_background);
+        }
+
+
+        if (boxSpacing == -1) {
+            boxSpacing = dpTopixel(context, 8f);
+        }
+
+        if (boxWidth == -1) {
+            boxWidth = dpTopixel(context, 40f);
+            boxHeight = dpTopixel(context, 40f);
+        }
+
+        if (boxHeight == -1) {
+            boxWidth = dpTopixel(context, 40f);
+            boxHeight = dpTopixel(context, 40f);
+        }
+
+        if (hint == null || hint.isEmpty()) {
+            hint = "*";
+        }
+
+
+        setOrientation(HORIZONTAL);
+        setGravity(Gravity.CENTER);
+        removeAllViews();
+        for (int i = 0; i < defaultPinSize; i++) {
+            EditText editText = new EditText(context);
+            editText.setBackgroundResource(resource);
+            editText.setMaxLines(1);
+            filterArray[0] = new InputFilter.LengthFilter(1);
+            editText.setFilters(filterArray);
+            editText.setHint(hint);
+            layoutParams = new LayoutParams((int) boxWidth, (int) boxHeight);
+            layoutParams.leftMargin = (int) boxSpacing;
+            layoutParams.topMargin = (int) boxSpacing;
+            layoutParams.bottomMargin = (int) boxSpacing;
+            layoutParams.rightMargin = (int) boxSpacing;
+            editText.setPadding(8, 4, 8, 4);
+            editText.setLayoutParams(layoutParams);
+            editText.setGravity(Gravity.CENTER);
+            editText.setClickable(false);
+            editText.addTextChangedListener(this);
+            addView(editText);
         }
     }
 
 
     @Override
-    public void setPin(int numberPinBoxes) {
-        setPin(numberPinBoxes, -1);
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
     }
 
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
 
-    public void setPin(int numberPinBoxes, int inputType) {
-        if (numberPinBoxes <= 0) {
-            numberPinBoxes = mNumberPinBoxes;
-        }
+    }
 
-        mLinearLayoutPinBoxes.removeAllViews();
-        setNumberPinBoxes(numberPinBoxes);
-        pinBoxesIds = new int[numberPinBoxes];
-        pinSplitsIds = new int[numberPinBoxes - 1];
-        int index = 0;
+    @Override
+    public void afterTextChanged(Editable s) {
 
-        for (int i = 0; i < numberPinBoxes; i++) {
-            mLinearLayoutPinBoxes.addView(generatePinBox(i, inputType), index);
-            if (mSplit != null && !mSplit.isEmpty() && i < numberPinBoxes - 1) {
-                mLinearLayoutPinBoxes.addView(generateSplit(i), index + 1);
-                mLinearLayoutPinBoxes.setGravity(Gravity.CENTER_VERTICAL);
-                index += 2;
+
+        if (s.length() == 1) {
+            if (currentPosition == defaultPinSize - 1) {
+
             } else {
-                index++;
+                EditText editText = (EditText) getChildAt(currentPosition + 1);
+                editText.requestFocus();
+                currentPosition++;
+            }
+        } else {
+            if (currentPosition > 0) {
+                currentPosition--;
+            }
+            // currentPosition--;
+            EditText editText = (EditText) getChildAt(currentPosition);
+            editText.requestFocus();
+
+        }
+
+        if (pinCompleteListener!=null){
+            if (defaultPinSize==getValues().length()){
+                pinCompleteListener.onCompletePin(getValues(),true);
+            }else {
+                pinCompleteListener.onCompletePin(getValues(),false);
             }
         }
-    }
-
-    @Override
-    protected void notifyPinViewCompleted() {
-        if (onCompleteListener != null) {
-            lastCompleted = true;
-            onCompleteListener.onComplete(true, getPinResults());
-        }
-    }
-
-
-    public String getPinResults() {
-
-        String pinResults = "";
-        for (int i = 0; i < mNumberPinBoxes; i++) {
-            String pinBoxValue = getPinBox(i).getText().toString();
-            if (pinBoxValue.isEmpty()) {
-                pinBoxValue = " ";
-            }
-            pinResults += pinBoxValue;
-        }
-        return pinResults;
-    }
-
-
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if (getOnFocusChangeListener() != null) {
-            getOnFocusChangeListener().onFocusChange(v, hasFocus);
-        }
-
-        EditText et = (EditText) v;
-        if (et.getText().toString().length() >= 1 && hasFocus && isDeleteOnClick()) {
-            et.getText().clear();
-        }
-
-        if (hasFocus) {
-            setImeVisibility(true);
-
-            if (onCompleteListener != null && lastCompleted) {
-                lastCompleted = false;
-                if (isDeleteOnClick()) {
-                    onCompleteListener.onComplete(false, null);
-                }
-            }
-        }
-    }
-
-
-    public void clear() {
-
-        for (int i = 0; i < mNumberPinBoxes; i++) {
-            getPinBox(i).getText().clear();
-        }
-        checkPinBoxesAvailableOrder();
-    }
-
-    /**
-     * Clear PinBoxes focus
-     */
-    public void resetChildrenFocus() {
-        for (int pinBoxesId : pinBoxesIds) {
-            EditText pin = (EditText) findViewById(pinBoxesId);
-            pin.setOnFocusChangeListener(this);
-        }
-    }
-
-    public boolean isKeyboardMandatory() {
-        return mKeyboardMandatory;
-    }
-
-    public void setKeyboardMandatory(boolean keyboardMandatory) {
-        this.mKeyboardMandatory = keyboardMandatory;
-    }
-
-    public boolean isMaskPassword() {
-        return mMaskPassword;
-    }
-
-    public void setMaskPassword(boolean maskPassword) {
-        setMaskPassword(maskPassword, true);
-    }
-
-    private void setMaskPassword(boolean maskPassword, boolean refresh) {
-        this.mMaskPassword = maskPassword;
-        if (refresh) {
-            setStylesPinBoxes();
-        }
-    }
-
-    public boolean isDeleteOnClick() {
-        return mDeleteOnClick;
-    }
-
-    public void setDeleteOnClick(boolean deleteOnClick) {
-        this.mDeleteOnClick = deleteOnClick;
-    }
-
-    public boolean isNativePinBox() {
-        return mNativePinBox;
-    }
-
-    public void setNativePinBox(boolean nativePinBox) {
-        setNativePinBox(nativePinBox, true);
-    }
-
-    private void setNativePinBox(boolean nativePinBox, boolean refresh) {
-        this.mNativePinBox = nativePinBox;
-        if (refresh) {
-            setStylesPinBoxes();
-        }
-    }
-
-    public void setCustomDrawablePinBox(int customDrawablePinBox) {
-        setCustomDrawablePinBox(customDrawablePinBox, true);
-    }
-
-    private void setCustomDrawablePinBox(int customDrawablePinBox, boolean refresh) {
-        if (customDrawablePinBox != 0) {
-            this.mCustomDrawablePinBox = customDrawablePinBox;
-            if (refresh) {
-                setStylesPinBoxes();
-            }
-        }
-    }
-
-    public int getNumberCharacters() {
-        return mNumberCharacters;
-    }
-
-    public void setNumberCharacters(int numberCharacters) {
-        setNumberCharacters(numberCharacters, true);
-    }
-
-    private void setNumberCharacters(int numberCharacters, boolean refresh) {
-        if (numberCharacters > 0) {
-            this.mNumberCharacters = numberCharacters;
-            if (refresh) {
-                setStylesPinBoxes();
-            }
-        }
-    }
-
-    public String getSplit() {
-        return mSplit;
-    }
-
-    public String getHint() {
-        return hint;
-    }
-
-    public void setSplit(String split) {
-        setSplit(split, true);
-    }
-
-    private void setSplit(String split, boolean refresh) {
-        if (split != null && !split.isEmpty()) {
-            this.mSplit = split;
-            if (refresh) {
-                setStylesSplits();
-            }
-        }
-    }
-
-    public float getSizeSplit() {
-        return mSizeSplit;
-    }
-
-    public void setSizeSplit(float sizeSplit) {
-        setSizeSplit(sizeSplit, true);
-    }
-
-    private void setSizeSplit(float sizeSplit, boolean refresh) {
-        if (sizeSplit != 0) {
-            mSizeSplit = sizeSplit;
-            if (refresh) {
-                setStylesSplits();
-            }
-        }
-    }
-
-    public float getTextSizePinBoxes() {
-        return mTextSizePinBoxes;
-    }
-
-    public void setTextSizePinBoxes(float textSizePinBoxes) {
-        setTextSizePinBoxes(textSizePinBoxes, true);
-    }
-
-    private void setTextSizePinBoxes(float textSizePinBoxes, boolean refresh) {
-        if (textSizePinBoxes != 0) {
-            mTextSizePinBoxes = textSizePinBoxes;
-            if (refresh) {
-                setStylesPinBoxes();
-            }
-        }
-    }
-
-    public float getTextSizeTitles() {
-        return mTextSizeTitles;
-    }
-
-    public void setTextSizeTitles(float textSizeTitles) {
-        setTextSizeTitles(textSizeTitles, true);
-    }
-
-    private void setTextSizeTitles(float textSizeTitles, boolean refresh) {
-        if (textSizeTitles != 0) {
-            mTextSizeTitles = textSizeTitles;
-            if (refresh) {
-                setStylePinTitles();
-            }
-        }
-    }
-
-    public String[] getPinTitles() {
-        return mPinTitles;
-    }
-
-    public int getNumberPinBoxes() {
-        return mNumberPinBoxes;
-    }
-
-    private void setNumberPinBoxes(int numberPinBoxes) {
-        if (numberPinBoxes > 0) {
-            this.mNumberPinBoxes = numberPinBoxes;
-        }
-    }
-
-    /**
-     * Set the text color for the Pin boxes
-     *
-     * @param color the color of the text
-     */
-    public void setColorTextPinBoxes(int color) {
-        setColorTextPinBoxes(color, true);
-    }
-
-    private void setColorTextPinBoxes(int color, boolean refresh) {
-        if (color != 0) {
-            int newColor;
-            try {
-                newColor = getResources().getColor(color);
-            } catch (Resources.NotFoundException e) {
-                newColor = color;
-            }
-            mColorTextPinBoxes = newColor;
-            if (refresh) {
-                setStylesPinBoxes();
-            }
-        }
-    }
-
-    /**
-     * Sets the text color for the titles
-     *
-     * @param color the color of the text
-     */
-    public void setColorTitles(int color) {
-        setColorTitles(color, true);
-    }
-
-    private void setColorTitles(int color, boolean refresh) {
-        if (color != 0) {
-            int newColor;
-            try {
-                newColor = getResources().getColor(color);
-            } catch (Resources.NotFoundException e) {
-                newColor = color;
-            }
-            mColorTextTitles = newColor;
-            if (refresh) {
-                setStylePinTitles();
-            }
-        }
-    }
-
-    /**
-     * Sets the color for the splits
-     *
-     * @param color the color of the mSplit
-     */
-    public void setColorSplit(int color) {
-        setColorSplit(color, true);
-    }
-
-    private void setColorSplit(int color, boolean refresh) {
-        if (color != 0) {
-            int newColor;
-            try {
-                newColor = getResources().getColor(color);
-            } catch (Resources.NotFoundException e) {
-                newColor = color;
-            }
-            mColorSplit = newColor;
-            if (refresh) {
-                setStylesSplits();
-            }
-        }
-    }
-
-
-    /**
-     * This method sets the desired functionalities of {@link PinView} to make easy.
-     *
-     * @param pinViewSettings Object with all functionalities to make easy.
-     */
-    public void setSettings(PinViewSettings pinViewSettings) {
-        mPinViewSettings = pinViewSettings;
-        setColorTextPinBoxes(mPinViewSettings.getColorTextPinBox(), false);
-        setColorTitles(mPinViewSettings.getColorTextTitles(), false);
-        setCustomDrawablePinBox(mPinViewSettings.getCustomDrawablePinBox(), false);
-        setColorSplit(mPinViewSettings.getColorSplit(), false);
-        setDeleteOnClick(mPinViewSettings.isDeleteOnClick());
-        setNativePinBox(mPinViewSettings.isNativePinBox(), false);
-        setMaskPassword(mPinViewSettings.isMaskPassword(), false);
-        setKeyboardMandatory(mPinViewSettings.isKeyboardMandatory());
-        setNumberCharacters(mPinViewSettings.getNumberCharacters(), false);
-        setSplit(mPinViewSettings.getSplit(), false);
-        setSizeSplit(mPinViewSettings.getSizeSplit(), false);
-        setTextSizePinBoxes(mPinViewSettings.getTextSizePinBox(), false);
-        setTextSizeTitles(mPinViewSettings.getTextSizeTitles(), false);
-        setHint(mPinViewSettings.getHint());
-        setTitles(mPinViewSettings.getPinTitles());
-        setPin(mPinViewSettings.getNumberPinBoxes());
-    }
-
-    /**
-     * Save the state of {@link PinView} when orientation screen changed.
-     */
-    @Override
-    public Parcelable onSaveInstanceState() {
-
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("instanceState", super.onSaveInstanceState());
-        saveSettings();
-        bundle.putParcelable("stateSettings", mPinViewSettings);
-        //save everything
-        bundle.putString("statePinResults", getPinResults());
-        return bundle;
-    }
-
-    /**
-     * Save current attributes in {@link PinView#mPinViewSettings}
-     */
-    private void saveSettings() {
-        mPinViewSettings = new PinViewSettings.Builder()
-                .withColorSplit(mColorSplit)
-                .withColorTextPinBox(mColorTextPinBoxes)
-                .withColorTextTitles(mColorTextTitles)
-                .withCustomDrawablePinBox(mCustomDrawablePinBox)
-                .withDeleteOnClick(isDeleteOnClick())
-                .withNativePinBox(isNativePinBox())
-                .withSplit(getSplit())
-                .withMaskPassword(isMaskPassword())
-                .withKeyboardMandatory(isKeyboardMandatory())
-                .withNumberCharacters(getNumberCharacters())
-                .withSizeSplit(getSizeSplit())
-                .withTextSizePinBox(getTextSizePinBoxes())
-                .withTextSizeTitles(getTextSizeTitles())
-                .withNumberPinBoxes(getNumberPinBoxes())
-                .withPinTitles(getPinTitles())
-                .withHint(getHint())
-                .build();
-    }
-
-    /**
-     * Retrieve the state of {@link PinView} when orientation screen changed.
-     */
-    @Override
-    public void onRestoreInstanceState(Parcelable state) {
-
-        if (state instanceof Bundle) {
-            Bundle bundle = (Bundle) state;
-            //load everything
-            PinViewSettings pinViewSettings = bundle.getParcelable("stateSettings");
-            if (pinViewSettings != null) {
-                setSettings(pinViewSettings);
-            }
-            String pinResults = bundle.getString("statePinResults");
-            setPinResults(pinResults);
-            state = bundle.getParcelable("instanceState");
-        }
-        super.onRestoreInstanceState(state);
-    }
-
-    /**
-     * Set a callback listener when {@link PinView} is fully completed or not
-     *
-     * @param listener Callback instance.
-     */
-    public void setOnCompleteListener(OnCompleteListener listener) {
-        onCompleteListener = listener;
-    }
-
-    public void setHint(String hint) {
-        this.hint = hint;
-    }
-
-    /**
-     * Interface for a callback when {@link PinView} is fully completed or not.
-     * Container Activity/Fragment must implement this interface
-     */
-    public interface OnCompleteListener {
-
-        void onComplete(boolean completed, String pinResults);
 
     }
+
+    public interface PinCompleteListener {
+        void onCompletePin(String result,boolean isCompleted);
+    }
+
 }
